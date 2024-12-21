@@ -3,6 +3,7 @@ import '../database_helper.dart';
 import '../models/user.dart';
 import '../utils/crypto_utils.dart';
 import 'package:logger/logger.dart';
+import 'login_page.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -23,17 +24,43 @@ class RegistrationPageState extends State<RegistrationPage> {
     String fullName = _fullNameController.text;
     String password = _passwordController.text;
 
+    if (username.isEmpty || fullName.isEmpty || password.isEmpty) {
+      _logger.e("All fields are required");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All fields are required')),
+      );
+      return;
+    }
+
     _logger.i("Username: $username, Full Name: $fullName, Password: $password");
 
-    // Encrypt the password before storing it in the database
-    String encryptedPassword = CryptoUtils.encryptPassword(password, username);
-    _logger.i("Encrypted Password: $encryptedPassword");
+    try {
+      // Encrypt the password before storing it in the database
+      String encryptedPassword = CryptoUtils.encryptPassword(password, username);
+      _logger.i("Encrypted Password: $encryptedPassword");
 
-    User newUser = User(username: username, fullName: fullName, password: encryptedPassword);
-    await DatabaseHelper.instance.insertUser(newUser);
+      User newUser = User(username: username, fullName: fullName, password: encryptedPassword);
 
-    if (!mounted) return;
-    Navigator.pop(context);
+      await DatabaseHelper.instance.insertUser(newUser);
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration successful!')),
+      );
+
+      // Navigate back to login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    } catch (e) {
+      _logger.e("Error during registration: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration failed: $e')),
+      );
+    }
   }
 
   @override

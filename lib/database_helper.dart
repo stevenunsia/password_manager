@@ -1,4 +1,5 @@
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'models/user.dart';
 import 'package:path/path.dart';
 import 'package:logger/logger.dart';
@@ -8,7 +9,15 @@ class DatabaseHelper {
   static Database? _database;
   final Logger _logger = Logger();
 
-  DatabaseHelper._init();
+  DatabaseHelper._init() {
+    // Initialize the database factory for non-mobile platforms
+    if (isWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    } else {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+  }
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -63,3 +72,5 @@ class DatabaseHelper {
     }
   }
 }
+
+bool get isWeb => identical(0, 0.0);
