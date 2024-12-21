@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'models/user.dart';
@@ -13,7 +14,7 @@ class DatabaseHelper {
     // Initialize the database factory for non-mobile platforms
     if (isWeb) {
       databaseFactory = databaseFactoryFfiWeb;
-    } else {
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
