@@ -27,7 +27,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadPasswords() async {
-    final passwords = await DatabaseHelper.instance.getPasswords();
+    final passwords = await DatabaseHelper.instance.getPasswordsByUsername(widget.username);
     if (mounted) {
       setState(() {
         _passwords = passwords;

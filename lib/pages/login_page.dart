@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../database_helper.dart';
 import '../models/user.dart';
 import '../utils/crypto_utils.dart';
-import 'home_page.dart';
 import 'registration_page.dart';
 import 'package:logger/logger.dart';
 
@@ -29,9 +28,10 @@ class LoginPageState extends State<LoginPage> {
 
       if (decryptedPassword == password) {
         if (!mounted) return;
-        Navigator.pushReplacement(
+        Navigator.pushReplacementNamed(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(username: username)), // Provide the required username argument
+          '/home',
+          arguments: username, // Pass the username as an argument
         );
       } else {
         _logger.e("Incorrect password");

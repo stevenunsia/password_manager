@@ -18,7 +18,15 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginPage(),
         '/register': (context) => RegistrationPage(),
-        '/home': (context) => HomePage(username: 'your_username'),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+          final username = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => HomePage(username: username),
+          );
+        }
+        return null;
       },
     );
   }

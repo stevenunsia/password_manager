@@ -1,29 +1,19 @@
-import 'dart:io';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite/sqflite.dart';
+import 'models/password.dart';
 import 'models/user.dart';
-import 'models/password.dart'; // Import the Password model
 import 'package:path/path.dart';
-import 'package:logger/logger.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
-  final Logger _logger = Logger();
 
-  DatabaseHelper._init() {
-    // Initialize the database factory for non-mobile platforms
-    if (isWeb) {
-      databaseFactory = databaseFactoryFfiWeb;
-    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
-  }
+  static Database? _database;
+
+  DatabaseHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('users.db');
+
+    _database = await _initDB('app.db');
     return _database!;
   }
 
@@ -31,47 +21,32 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 2, onCreate: (db, version) async {
-      await db.execute('''
-        CREATE TABLE users (
-          userId INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT NOT NULL,
-          fullName TEXT NOT NULL,
-          password TEXT NOT NULL
-        )
-      ''');
-      await db.execute('''
-        CREATE TABLE passwords (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          email TEXT NOT NULL,
-          username TEXT NOT NULL,
-          password TEXT NOT NULL
-        )
-      ''');
-    }, onUpgrade: (db, oldVersion, newVersion) async {
-      if (oldVersion < 2) {
-        await db.execute('''
-          CREATE TABLE passwords (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            email TEXT NOT NULL,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
-          )
-        ''');
-      }
-    });
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  Future<void> insertUser(User user) async {
-    final db = await database;
-    try {
-      await db.insert('users', user.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-      _logger.i("Database insert successful");
-    } catch (e) {
-      _logger.e("Error inserting into database: $e");
-    }
+  Future _createDB(Database db, int version) async {
+    const userTable = '''
+    CREATE TABLE users (
+      userId INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
+      fullName TEXT NOT NULL,
+      password TEXT NOT NULL
+    )
+    ''';
+
+    const passwordTable = '''
+    CREATE TABLE passwords (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      email TEXT NOT NULL,
+      username TEXT NOT NULL,
+      password TEXT NOT NULL,
+      FOREIGN KEY (username) REFERENCES users (username)
+    )
+    ''';
+
+    await db.execute(userTable);
+    await db.execute(passwordTable);
   }
 
   Future<User?> getUser(String username) async {
@@ -84,15 +59,15 @@ class DatabaseHelper {
     );
 
     if (maps.isNotEmpty) {
-      return User(
-        userId: maps.first['userId'] as int?,
-        username: maps.first['username'] as String,
-        fullName: maps.first['fullName'] as String,
-        password: maps.first['password'] as String,
-      );
+      return User.fromMap(maps.first);
     } else {
       return null;
     }
+  }
+
+  Future<void> insertUser(User user) async {
+    final db = await database;
+    await db.insert('users', user.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateUser(User user) async {
@@ -105,17 +80,33 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> deleteUser(int userId) async {
+    final db = await database;
+    await db.delete(
+      'users',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  Future<List<Password>> getPasswordsByUsername(String username) async {
+    final db = await database;
+    final maps = await db.query(
+      'passwords',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+
+    if (maps.isNotEmpty) {
+      return maps.map((map) => Password.fromMap(map)).toList();
+    } else {
+      return [];
+    }
+  }
+
   Future<void> insertPassword(Password password) async {
     final db = await database;
     await db.insert('passwords', password.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  Future<List<Password>> getPasswords() async {
-    final db = await database;
-    final maps = await db.query('passwords');
-    return List.generate(maps.length, (i) {
-      return Password.fromMap(maps[i]);
-    });
   }
 
   Future<void> updatePassword(Password password) async {
@@ -130,8 +121,10 @@ class DatabaseHelper {
 
   Future<void> deletePassword(int id) async {
     final db = await database;
-    await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
+    await db.delete(
+      'passwords',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
-
-bool get isWeb => identical(0, 0.0);
