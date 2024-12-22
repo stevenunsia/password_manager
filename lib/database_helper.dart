@@ -1,12 +1,14 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart'; // Import the path package
 import 'models/password.dart';
 import 'models/user.dart';
-import 'package:path/path.dart';
+import 'package:logger/logger.dart'; // Import the logger package
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
 
   static Database? _database;
+  final Logger _logger = Logger(); // Create a Logger instance
 
   DatabaseHelper._init();
 
@@ -19,7 +21,7 @@ class DatabaseHelper {
 
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    final path = join(dbPath, filePath); // Use the join function from the path package
 
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
@@ -126,5 +128,23 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> printDatabaseContents() async {
+    final db = await database;
+
+    // Print users table
+    final users = await db.query('users');
+    _logger.i('Users Table:');
+    for (var user in users) {
+      _logger.i(user);
+    }
+
+    // Print passwords table
+    final passwords = await db.query('passwords');
+    _logger.i('Passwords Table:');
+    for (var password in passwords) {
+      _logger.i(password);
+    }
   }
 }

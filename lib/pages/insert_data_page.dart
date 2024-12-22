@@ -49,7 +49,7 @@ class InsertDataPageState extends State<InsertDataPage> {
 
     if (!mounted) return;
 
-    Navigator.pop(context, true);
+    Navigator.pop(context, true); // Indicate success
   }
 
   @override

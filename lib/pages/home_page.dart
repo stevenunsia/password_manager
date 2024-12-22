@@ -3,7 +3,7 @@ import '../database_helper.dart';
 import '../models/password.dart';
 import 'edit_data_page.dart'; // Import the EditDataPage
 import 'insert_data_page.dart'; // Import the InsertDataPage
-import 'profile_page.dart';
+import 'profile_page.dart'; // Import the ProfilePage
 import '../utils/crypto_utils.dart'; // Import CryptoUtils for decryption
 
 class HomePage extends StatefulWidget {
@@ -50,7 +50,17 @@ class HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text("Password Manager")),
+      appBar: AppBar(
+        title: Text("Password Manager"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.print),
+            onPressed: () async {
+              await DatabaseHelper.instance.printDatabaseContents();
+            },
+          ),
+        ],
+      ),
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -66,6 +76,18 @@ class HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[800],
         onTap: _onItemTapped,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => InsertDataPage()),
+          );
+          if (result == true && mounted) {
+            _loadPasswords();
+          }
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
@@ -85,62 +107,54 @@ class HomePageState extends State<HomePage> {
                     ? CryptoUtils.decryptPassword(password.password, password.username)
                     : '********';
 
-                return ListTile(
-                  title: Text(password.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Email: ${password.email}'),
-                      Text('Username: ${password.username}'),
-                      Text('Password: $decryptedPassword'), // Show decrypted password if visible
-                    ],
+                return Card(
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    title: Text(password.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Email: ${password.email}'),
+                        Text('Username: ${password.username}'),
+                        Text('Password: $decryptedPassword'), // Show decrypted password if visible
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+                          onPressed: () {
+                            setState(() {
+                              _showPasswords[password.id!] = !isPasswordVisible;
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () async {
+                            await DatabaseHelper.instance.deletePassword(password.id!);
+                            _loadPasswords();
+                          },
+                        ),
+                      ],
+                    ),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditPasswordPage(password: password), // Pass the correct password object
+                        ),
+                      );
+                      if (result == true && mounted) {
+                        _loadPasswords();
+                      }
+                    },
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () {
-                          setState(() {
-                            _showPasswords[password.id!] = !isPasswordVisible;
-                          });
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () async {
-                          await DatabaseHelper.instance.deletePassword(password.id!);
-                          _loadPasswords();
-                        },
-                      ),
-                    ],
-                  ),
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditPasswordPage(password: password), // Pass the correct password object
-                      ),
-                    );
-                    if (result == true && mounted) {
-                      _loadPasswords();
-                    }
-                  },
                 );
               },
             ),
-          ),
-          FloatingActionButton(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => InsertDataPage()), // Use the correct class name
-              );
-              if (result == true && mounted) {
-                _loadPasswords();
-              }
-            },
-            child: Icon(Icons.add),
           ),
         ],
       ),
