@@ -17,7 +17,7 @@ class CryptoUtils {
   }
 
   static String encryptPassword(String password, String key) {
-    final encrypter = Encrypter(AES(_generateKey(key)));
+    final encrypter = Encrypter(AES(_generateKey(key), mode: AESMode.cbc, padding: 'PKCS7')); // Ensure AES 128 with PKCS7 padding
     final iv = _generateIV();
     final encrypted = encrypter.encrypt(password, iv: iv);
     return '${iv.base64}:${encrypted.base64}';
@@ -25,9 +25,16 @@ class CryptoUtils {
 
   static String decryptPassword(String encrypted, String key) {
     final parts = encrypted.split(':');
+    if (parts.length != 2) {
+      throw ArgumentError('Invalid encrypted data format');
+    }
     final iv = IV.fromBase64(parts[0]);
-    final encrypter = Encrypter(AES(_generateKey(key)));
-    final decrypted = encrypter.decrypt64(parts[1], iv: iv);
-    return decrypted;
+    final encrypter = Encrypter(AES(_generateKey(key), mode: AESMode.cbc, padding: 'PKCS7')); // Ensure AES 128 with PKCS7 padding
+    try {
+      final decrypted = encrypter.decrypt64(parts[1], iv: iv);
+      return decrypted;
+    } catch (e) {
+      throw ArgumentError('Invalid or corrupted pad block');
+    }
   }
 }

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '../database_helper.dart';
 import '../models/password.dart';
+import '../utils/crypto_utils.dart'; // Import CryptoUtils for encryption
 
-class InsertPasswordPage extends StatefulWidget {
-  const InsertPasswordPage({super.key});
+class InsertDataPage extends StatefulWidget {
+  const InsertDataPage({super.key});
 
   @override
-  InsertPasswordPageState createState() => InsertPasswordPageState();
+  InsertDataPageState createState() => InsertDataPageState();
 }
 
-class InsertPasswordPageState extends State<InsertPasswordPage> {
+class InsertDataPageState extends State<InsertDataPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -28,11 +29,20 @@ class InsertPasswordPageState extends State<InsertPasswordPage> {
       return;
     }
 
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid email format')),
+      );
+      return;
+    }
+
+    final encryptedPassword = CryptoUtils.encryptPassword(password, username); // Encrypt the password
+
     final newPassword = Password(
       title: title,
       email: email,
       username: username,
-      password: password,
+      password: encryptedPassword,
     );
 
     await DatabaseHelper.instance.insertPassword(newPassword);
@@ -45,7 +55,7 @@ class InsertPasswordPageState extends State<InsertPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Tambah Password")),
+      appBar: AppBar(title: Text("Tambah Data Password")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

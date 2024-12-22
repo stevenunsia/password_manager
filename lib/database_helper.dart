@@ -95,7 +95,16 @@ class DatabaseHelper {
     }
   }
 
-  // Methods for handling passwords
+  Future<void> updateUser(User user) async {
+    final db = await database;
+    await db.update(
+      'users',
+      user.toMap(),
+      where: 'userId = ?',
+      whereArgs: [user.userId],
+    );
+  }
+
   Future<void> insertPassword(Password password) async {
     final db = await database;
     await db.insert('passwords', password.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);

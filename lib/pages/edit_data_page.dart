@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database_helper.dart';
 import '../models/password.dart';
+import '../utils/crypto_utils.dart';
 
 class EditPasswordPage extends StatefulWidget {
   final Password password;
@@ -23,7 +24,9 @@ class EditPasswordPageState extends State<EditPasswordPage> {
     _titleController = TextEditingController(text: widget.password.title);
     _emailController = TextEditingController(text: widget.password.email);
     _usernameController = TextEditingController(text: widget.password.username);
-    _passwordController = TextEditingController(text: widget.password.password);
+    _passwordController = TextEditingController(
+      text: CryptoUtils.decryptPassword(widget.password.password, widget.password.username),
+    );
   }
 
   Future<void> _updatePassword() async {
@@ -39,12 +42,21 @@ class EditPasswordPageState extends State<EditPasswordPage> {
       return;
     }
 
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid email format')),
+      );
+      return;
+    }
+
+    final encryptedPassword = CryptoUtils.encryptPassword(password, username);
+
     final updatedPassword = Password(
       id: widget.password.id,
       title: title,
-      email: email,
       username: username,
-      password: password,
+      email: email,
+      password: encryptedPassword,
     );
 
     await DatabaseHelper.instance.updatePassword(updatedPassword);
@@ -57,14 +69,14 @@ class EditPasswordPageState extends State<EditPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Edit Password")),
+      appBar: AppBar(title: Text("Edit Data Password")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _titleController,
-              decoration: InputDecoration(labelText: 'Nama Aplikasi'),
+              decoration: InputDecoration(labelText: 'Title'),
             ),
             TextField(
               controller: _emailController,

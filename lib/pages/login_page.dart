@@ -31,13 +31,21 @@ class LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(username: username)), // Provide the required username argument
         );
       } else {
         _logger.e("Incorrect password");
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Incorrect password')),
+        );
       }
     } else {
       _logger.e("User not found");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User not found')),
+      );
     }
   }
 
