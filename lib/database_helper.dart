@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'models/user.dart';
+import 'models/password.dart'; // Import the Password model
 import 'package:path/path.dart';
 import 'package:logger/logger.dart';
 
@@ -30,8 +31,8 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: (db, version) {
-      return db.execute('''
+    return await openDatabase(path, version: 2, onCreate: (db, version) async {
+      await db.execute('''
         CREATE TABLE users (
           userId INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT NOT NULL,
@@ -39,6 +40,27 @@ class DatabaseHelper {
           password TEXT NOT NULL
         )
       ''');
+      await db.execute('''
+        CREATE TABLE passwords (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          email TEXT NOT NULL,
+          username TEXT NOT NULL,
+          password TEXT NOT NULL
+        )
+      ''');
+    }, onUpgrade: (db, oldVersion, newVersion) async {
+      if (oldVersion < 2) {
+        await db.execute('''
+          CREATE TABLE passwords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            email TEXT NOT NULL,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL
+          )
+        ''');
+      }
     });
   }
 
@@ -71,6 +93,35 @@ class DatabaseHelper {
     } else {
       return null;
     }
+  }
+
+  // Methods for handling passwords
+  Future<void> insertPassword(Password password) async {
+    final db = await database;
+    await db.insert('passwords', password.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Password>> getPasswords() async {
+    final db = await database;
+    final maps = await db.query('passwords');
+    return List.generate(maps.length, (i) {
+      return Password.fromMap(maps[i]);
+    });
+  }
+
+  Future<void> updatePassword(Password password) async {
+    final db = await database;
+    await db.update(
+      'passwords',
+      password.toMap(),
+      where: 'id = ?',
+      whereArgs: [password.id],
+    );
+  }
+
+  Future<void> deletePassword(int id) async {
+    final db = await database;
+    await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
   }
 }
 
