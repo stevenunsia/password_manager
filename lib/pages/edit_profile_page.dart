@@ -17,8 +17,8 @@ class EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _fullNameController;
   late TextEditingController _passwordController;
   
-  bool _isPasswordVisible = false;
-  bool _isPasswordEditable = false;
+  bool _isPasswordVisible = false; // Tambahkan variabel kontrol visibilitas
+  bool _isPasswordEditable = false; // Tambahkan variabel kontrol editabilitas
 
   @override
   void initState() {
@@ -76,51 +76,42 @@ class EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ListTile(
-              title: Text('Username'),
-              subtitle: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(labelText: 'Username'),
-                readOnly: true, // Lock the username field
-              ),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(labelText: 'Username'),
+              readOnly: true, // Lock the username field
             ),
-            ListTile(
-              title: Text('Full Name'),
-              subtitle: TextField(
-                controller: _fullNameController,
-                decoration: InputDecoration(labelText: 'Full Name'),
-              ),
+            TextField(
+              controller: _fullNameController,
+              decoration: InputDecoration(labelText: 'Full Name'),
             ),
-            ListTile(
-              title: Text('Password'),
-              subtitle: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(labelText: 'Password'),
-                      obscureText: !_isPasswordVisible,
-                      readOnly: !_isPasswordEditable, // Lock the password field initially
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(labelText: 'Password'),
+                    obscureText: !_isPasswordVisible,
+                    readOnly: !_isPasswordEditable, // Lock the password field initially
                   ),
-                  IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordEditable = !_isPasswordEditable;
-                      });
-                    },
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordEditable = !_isPasswordEditable;
+                    });
+                  },
+                ),
+              ],
             ),
             SizedBox(height: 20),
             ElevatedButton(
