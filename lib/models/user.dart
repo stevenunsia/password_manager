@@ -14,13 +14,4 @@ class User {
       'password': password,
     };
   }
-
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
-      userId: map['userId'],
-      username: map['username'],
-      fullName: map['fullName'],
-      password: map['password'],
-    );
-  }
 }

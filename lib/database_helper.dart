@@ -82,30 +82,6 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> deleteUser(int userId) async {
-    final db = await database;
-    await db.delete(
-      'users',
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
-  }
-
-  Future<List<Password>> getPasswordsByUsername(String username) async {
-    final db = await database;
-    final maps = await db.query(
-      'passwords',
-      where: 'username = ?',
-      whereArgs: [username],
-    );
-
-    if (maps.isNotEmpty) {
-      return maps.map((map) => Password.fromMap(map)).toList();
-    } else {
-      return [];
-    }
-  }
-
   Future<void> insertPassword(Password password) async {
     final db = await database;
     await db.insert('passwords', password.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
